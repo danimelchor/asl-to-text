@@ -3,17 +3,18 @@ import torch
 import cv2
 from typing import Literal
 
-from src.utils import normalize_hand
+from src.utils import points_to_tensor
 from src.PointNet import PointNet
 
 from src.Webcam import Webcam
 
 
 class Classifier:
-    def __init__(self, model: Literal["abc", "conversation"]) -> None:
+    def __init__(self, model: Literal["abc", "conversation"], interval: int) -> None:
         # Config constants
         self.DEVICE = "mps"
         self.MODE = model
+        self.INTERVAL = interval
         self.WEBCAM = Webcam()
 
         # Load the model
@@ -21,41 +22,6 @@ class Classifier:
             self.id2label = pickle.load(f)
         self.model = PointNet(classes=len(self.id2label), device=self.DEVICE)
         self.model.load_from_pth(f"./data/model/{model}.pth")
-
-    def points_to_tensor(self, points, hands) -> torch.Tensor:
-        """
-        Converts the points to a tensor
-
-        Args:
-            points (List[List[Point]]): The points
-            hands (List[Hand]): The hands
-
-        Returns:
-            torch.Tensor: The tensor
-        """
-        left = right = None
-
-        num_hands = len(hands)
-        for idx in range(num_hands):
-            points_arr = points[idx]
-            hand = hands[idx]
-
-            if hand == "Left":
-                left = points_arr
-            elif hand == "Right":
-                right = points_arr
-
-        # Convert to tensors
-        left_tensor = torch.tensor(left) if left else torch.zeros((21, 3))
-        right_tensor = torch.tensor(right) if right else torch.zeros((21, 3))
-
-        # Normalize
-        left_tensor = normalize_hand(left_tensor)
-        right_tensor = normalize_hand(right_tensor)
-
-        # Concatenate
-        data = torch.cat((left_tensor, right_tensor), dim=0).to(self.DEVICE)
-        return data if (left or right) else None
 
     def predict(self, tensor: torch.Tensor) -> str:
         """
@@ -97,8 +63,8 @@ class Classifier:
             points, hands, frame = self.WEBCAM.process_next()
 
             # Transform data into tensor
-            if hands and frame_idx % 5 == 0:
-                tensor = self.points_to_tensor(points, hands)
+            if hands and frame_idx % self.INTERVAL == 0:
+                tensor = points_to_tensor(points, hands, self.DEVICE)
 
                 # Classify
                 scores = self.predict(tensor)

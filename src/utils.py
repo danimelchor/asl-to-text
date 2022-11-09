@@ -33,3 +33,39 @@ def normalize_hand(points):
     points[torch.isnan(points)] = 0
 
     return points
+
+
+def points_to_tensor(points, hands, device="cpu") -> torch.Tensor:
+    """
+    Converts the points to a tensor
+
+    Args:
+        points (List[List[Point]]): The points
+        hands (List[Hand]): The hands
+
+    Returns:
+        torch.Tensor: The tensor
+    """
+    left = right = None
+
+    num_hands = len(hands)
+    for idx in range(num_hands):
+        points_arr = points[idx]
+        hand = hands[idx]
+
+        if hand == "Left":
+            left = points_arr
+        elif hand == "Right":
+            right = points_arr
+
+    # Convert to tensors
+    left_tensor = torch.tensor(left) if left else torch.zeros((21, 3))
+    right_tensor = torch.tensor(right) if right else torch.zeros((21, 3))
+
+    # Normalize
+    left_tensor = normalize_hand(left_tensor)
+    right_tensor = normalize_hand(right_tensor)
+
+    # Concatenate
+    data = torch.cat((left_tensor, right_tensor), dim=0).to(device)
+    return data if (left or right) else None
