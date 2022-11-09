@@ -36,4 +36,4 @@ The training is done in the `src/train.ipynb` notebook. It is used to train the 
 
 ## Donations
 
-If you want to support me, you can donate me on [PayPal](https://paypal.me/danimelchor)
+If you enjoy my work, please donate [here](https://paypal.me/danimelchor)
