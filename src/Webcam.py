@@ -27,6 +27,9 @@ class Webcam:
         return points, hands
 
     def display_text(self, scores, frame):
+        if scores is None:
+            return
+
         height = 40
         for idx, (label, score) in enumerate(scores):
             txt = f"{label.ljust(10)}: {int(score)}%"
@@ -84,9 +87,6 @@ class Webcam:
                     mp_drawing_styles.get_default_hand_landmarks_style(),
                     mp_drawing_styles.get_default_hand_connections_style(),
                 )
-
-        # Store frame for display
-        self.last_frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
         # Analyze frame
         points, hands = self.__landmarks_to_points(

@@ -51,7 +51,6 @@ def harvest(label: str, num_hands: int, num_frames: int, fname: str):
         max_num_hands=2,
         min_detection_confidence=0.5
     ) as hands:
-
         now = time.time()
         
         # For each frame save location
@@ -106,6 +105,8 @@ def harvest(label: str, num_hands: int, num_frames: int, fname: str):
                 if num_detected_hands == num_hands:
                     data_points.append(data)
                     print(len(data_points))
+                else:
+                    print('Not enough or too many hands detected')
             else:
                 save_points(data_points, label, fname)
                 break
@@ -117,17 +118,15 @@ def harvest(label: str, num_hands: int, num_frames: int, fname: str):
 if __name__ == "__main__":
     labels = []
     frames_per_label = 200
-
-    fname = input("Enter filename: ")
+    fname = input("Enter filename ('data/raw/{fname}'): ")
 
     while True:
-        label = input("Enter label (or exit): ")
-
+        label = input("Enter label (or 'exit'): ")
         if label == "exit":
             break
 
         labels.append(label)
-        num_hands = int(input("Enter number of hands: "))
+        num_hands = int(input("Enter number of hands to track: "))
         exited = harvest(label, num_hands, frames_per_label, fname)
 
         if exited:
