@@ -4,7 +4,7 @@ import cv2
 from typing import Literal
 
 from src.utils import normalize_hand
-from pointnet.PointNet import PointNet, eval_model_scores
+from PointNet import PointNet, eval_model_scores
 
 from src.Webcam import Webcam
 
