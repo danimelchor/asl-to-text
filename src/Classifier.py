@@ -4,25 +4,23 @@ import cv2
 from typing import Literal
 
 from src.utils import normalize_hand
-from PointNet import PointNet, eval_model_scores
+from src.PointNet import PointNet
 
 from src.Webcam import Webcam
 
 
 class Classifier:
-    def __init__(
-        self, model: Literal["abc", "conversation"] = "conversation", noise_lvl: int = 4
-    ) -> None:
+    def __init__(self, model: Literal["abc", "conversation"]) -> None:
         # Config constants
         self.DEVICE = "mps"
-        self.CONFIDENCE_SCORE = 50  # Percent
         self.MODE = model
-
         self.WEBCAM = Webcam()
-        with open(f"./model/{model}_id2label.pkl", "rb") as f:
+
+        # Load the model
+        with open(f"./data/model/{model}_id2label.pkl", "rb") as f:
             self.id2label = pickle.load(f)
         self.model = PointNet(classes=len(self.id2label), device=self.DEVICE)
-        self.model.load_from_pth(f"./model/{model}.pth")
+        self.model.load_from_pth(f"./data/model/{model}.pth")
 
     def points_to_tensor(self, points, hands) -> torch.Tensor:
         """
@@ -59,6 +57,33 @@ class Classifier:
         data = torch.cat((left_tensor, right_tensor), dim=0).to(self.DEVICE)
         return data if (left or right) else None
 
+    def predict(self, tensor: torch.Tensor) -> str:
+        """
+        Predicts the label of the given tensor
+
+        Args:
+            tensor (torch.Tensor): The tensor
+
+        Returns:
+            str: The label
+        """
+        self.model.eval()
+        with torch.no_grad():
+            # Convert from 42x3 to 1x42x3
+            tensor = tensor.unsqueeze(0).to(self.DEVICE)
+            outputs, __, __ = self.model(tensor.transpose(1, 2))
+
+            # Softmax over logits
+            probs = torch.exp(outputs) * 100
+
+            # Create tuples (word, probability)
+            scores = [
+                (self.id2label[i], probs[0][i].item())
+                for i in range(len(self.id2label))
+            ]
+            scores.sort(key=lambda x: x[1], reverse=True)
+            return scores
+
     def run(self):
         """
         Main entry point for the classifier
@@ -76,9 +101,7 @@ class Classifier:
                 tensor = self.points_to_tensor(points, hands)
 
                 # Classify
-                scores = eval_model_scores(
-                    self.model, tensor, self.id2label, device=self.DEVICE
-                )
+                scores = self.predict(tensor)
 
                 frames_no_hands = 0
             else:

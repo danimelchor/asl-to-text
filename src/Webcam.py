@@ -1,6 +1,7 @@
 import cv2
 import mediapipe as mp
 
+
 class Webcam:
     def __init__(self) -> None:
         self.CAMERA = cv2.VideoCapture(0)
@@ -69,9 +70,7 @@ class Webcam:
 
         # Process frame
         with mp_hands.Hands(
-            static_image_mode=True,
-            max_num_hands=2,
-            min_detection_confidence=0.5
+            static_image_mode=True, max_num_hands=2, min_detection_confidence=0.5
         ) as hands:
             frame.flags.writeable = False
             results = hands.process(frame)
@@ -90,8 +89,7 @@ class Webcam:
 
         # Analyze frame
         points, hands = self.__landmarks_to_points(
-            results.multi_hand_landmarks,
-            results.multi_handedness
+            results.multi_hand_landmarks, results.multi_handedness
         )
 
         return points, hands, frame
