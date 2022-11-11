@@ -21,7 +21,6 @@ def parse_args():
         type=int,
         default=5,
         help="How often should the classifier be run? (in frames)",
-        min=1,
     )
 
     args = parser.parse_args()
